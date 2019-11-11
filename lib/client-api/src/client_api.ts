@@ -82,14 +82,32 @@ const withSubscriptionTracking = (storyFn: StoryFn) => {
   return result;
 };
 
+let _globalDecorators: DecoratorFunction[] = [];
+
+let _globalParameters: Parameters = {};
+
+export const addDecorator = (decoratorFn: DecoratorFunction) => {
+  _globalDecorators.push(decoratorFn);
+};
+
+export const addParameters = (parameters: Parameters) => {
+  _globalParameters = {
+    ..._globalParameters,
+    ...parameters,
+    options: {
+      ...merge(get(_globalParameters, 'options', {}), get(parameters, 'options', {})),
+    },
+    // FIXME: https://github.com/storybookjs/storybook/issues/7872
+    docs: {
+      ...merge(get(_globalParameters, 'docs', {}), get(parameters, 'docs', {})),
+    },
+  };
+};
+
 export default class ClientApi {
   private _storyStore: StoryStore;
 
   private _addons: ClientApiAddons<unknown>;
-
-  private _globalDecorators: DecoratorFunction[];
-
-  private _globalParameters: Parameters;
 
   private _decorateStory: (storyFn: StoryFn, decorators: DecoratorFunction[]) => any;
 
@@ -97,8 +115,6 @@ export default class ClientApi {
     this._storyStore = storyStore;
     this._addons = {};
 
-    this._globalDecorators = [];
-    this._globalParameters = {};
     this._decorateStory = decorateStory;
 
     if (!storyStore) {
@@ -113,36 +129,34 @@ export default class ClientApi {
     };
   };
 
-  getSeparators = () =>
-    Object.assign(
-      {},
-      {
-        hierarchyRootSeparator: '|',
-        hierarchySeparator: /\/|\./,
-      },
-      this._globalParameters.options
-    );
+  getSeparators = () => ({
+    hierarchyRootSeparator: '|',
+    hierarchySeparator: /\/|\./,
+    ..._globalParameters.options,
+  });
 
   addDecorator = (decorator: DecoratorFunction) => {
-    this._globalDecorators.push(decorator);
+    addDecorator(decorator);
   };
 
-  addParameters = (parameters: Parameters | { globalParameter: 'string' }) => {
-    this._globalParameters = {
-      ...this._globalParameters,
-      ...parameters,
-      options: {
-        ...merge(get(this._globalParameters, 'options', {}), get(parameters, 'options', {})),
-      },
-    };
+  addParameters = (parameters: Parameters) => {
+    addParameters(parameters);
   };
 
   clearDecorators = () => {
-    this._globalDecorators = [];
+    _globalDecorators = [];
   };
 
-  // what are the occasions that "m" is simply a boolean, vs an obj
-  storiesOf = <TApi = unknown>(kind: string, m: NodeModule): StoryApi<TApi> => {
+  clearParameters = () => {
+    // Utility function FOR TESTING USE ONLY
+    _globalParameters = {};
+  };
+
+  // what are the occasions that "m" is a boolean vs an obj
+  storiesOf = <StoryFnReturnType = unknown>(
+    kind: string,
+    m: NodeModule
+  ): StoryApi<StoryFnReturnType> => {
     if (!kind && typeof kind !== 'string') {
       throw new Error('Invalid or missing kind provided for stories, should be a string');
     }
@@ -153,6 +167,16 @@ export default class ClientApi {
       );
     }
 
+    if (m) {
+      const proto = Object.getPrototypeOf(m);
+      if (proto.exports && proto.exports.default) {
+        // FIXME: throw an error in SB6.0
+        logger.error(
+          `Illegal mix of CSF default export and storiesOf calls in a single file: ${proto.i}`
+        );
+      }
+    }
+
     if (m && m.hot && m.hot.dispose) {
       m.hot.dispose(() => {
         const { _storyStore } = this;
@@ -161,10 +185,10 @@ export default class ClientApi {
       });
     }
 
-    const localDecorators: DecoratorFunction[] = [];
+    const localDecorators: DecoratorFunction<StoryFnReturnType>[] = [];
     let localParameters: Parameters = {};
     let hasAdded = false;
-    const api: StoryApi<TApi> = {
+    const api: StoryApi<StoryFnReturnType> = {
       kind: kind.toString(),
       add: () => api,
       addDecorator: () => api,
@@ -182,7 +206,6 @@ export default class ClientApi {
 
     api.add = (storyName, storyFn, parameters) => {
       hasAdded = true;
-      const { _globalParameters, _globalDecorators } = this;
 
       const id = toId(kind, storyName);
 
@@ -249,7 +272,7 @@ export default class ClientApi {
       return api;
     };
 
-    api.addDecorator = (decorator: DecoratorFunction) => {
+    api.addDecorator = (decorator: DecoratorFunction<StoryFnReturnType>) => {
       if (hasAdded) {
         logger.warn(`You have added a decorator to the kind '${kind}' after a story has already been added.
 In Storybook 4 this applied the decorator only to subsequent stories. In Storybook 5+ it applies to all stories.

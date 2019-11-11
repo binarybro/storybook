@@ -1,6 +1,5 @@
-import { load, addParameters, addDecorator } from '@storybook/html';
+import { configure, addParameters, addDecorator } from '@storybook/html';
 import { withA11y } from '@storybook/addon-a11y';
-import { DocsPage } from '@storybook/addon-docs/blocks';
 
 addDecorator(withA11y);
 
@@ -14,12 +13,10 @@ addParameters({
   },
   options: {
     hierarchyRootSeparator: /\|/,
-    docs: {
-      iframeHeight: '200px',
-    },
   },
-  docs: DocsPage,
+  docs: {
+    iframeHeight: '200px',
+  },
 });
 
-load(require.context('../stories', true, /\.stories\.js$/), module);
-load(require.context('../stories', true, /\.stories\.mdx$/), module);
+configure(require.context('../stories', true, /\.stories\.(js|mdx)$/), module);

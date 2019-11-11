@@ -4,8 +4,11 @@ import { Button } from '@storybook/react/demo';
 
 export default {
   title: 'Other|Demo/Button',
+  component: Button,
   parameters: {
-    component: Button,
+    docs: {
+      inlineStories: false,
+    },
   },
 };
 
@@ -25,13 +28,17 @@ withSomeEmoji.story = {
   name: 'with some emoji',
 };
 
-export const withCounter = () =>
-  React.createElement(() => {
-    const [counter, setCounter] = useState(0);
-    const label = `Testing: ${counter}`;
-    return <Button onClick={() => setCounter(counter + 1)}>{label}</Button>;
-  });
+export const withCounter = () => {
+  const [counter, setCounter] = useState(0);
+  const label = `Testing: ${counter}`;
+  return <Button onClick={() => setCounter(counter + 1)}>{label}</Button>;
+};
 
 withCounter.story = {
-  name: 'with coumter',
+  name: 'with counter',
+  parameters: {
+    docs: {
+      storyDescription: 'This demonstrates react hooks working inside stories. Go team! 🚀',
+    },
+  },
 };

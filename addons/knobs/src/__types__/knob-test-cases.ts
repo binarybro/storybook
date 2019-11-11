@@ -15,6 +15,7 @@ import {
 } from '../index';
 
 // Note: this is a helper to batch test return types and avoid "declared but never read" errors
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 function expectKnobOfType<T>(..._: T[]) {}
 
 const groupId = 'GROUP-ID1';
@@ -57,8 +58,8 @@ expectKnobOfType<number>(
 
 /** Radios knob */
 
-expectKnobOfType(
-  radios<string>(
+expectKnobOfType<string>(
+  radios(
     'radio with string values',
     {
       1100: '1100',
@@ -66,8 +67,12 @@ expectKnobOfType(
       3300: '3300',
     },
     '2200'
-  ),
-  radios<number>('radio with number values', { 3: 3, 7: 7, 23: 23 }, 3),
+  )
+);
+
+expectKnobOfType<number>(radios('radio with number values', { 3: 3, 7: 7, 23: 23 }, 3));
+
+expectKnobOfType<string | number | null>(
   radios(
     'radio with mixed value',
     {
@@ -102,10 +107,13 @@ expectKnobOfType<string>(
     },
     'none'
   ),
-  select('select with string array', ['yes', 'no'], 'yes'),
+  select<string>('select with string array', ['yes', 'no'], 'yes'),
   select('select with string literal array', stringLiteralArray, stringLiteralArray[0]),
   select('select with readonly array', ['red', 'blue'] as const, 'red'),
-  select<ButtonVariant>('select with string enum options', ButtonVariant, ButtonVariant.primary),
+  select<ButtonVariant>('select with string enum options', ButtonVariant, ButtonVariant.primary)
+);
+
+expectKnobOfType<string | null>(
   select('select with null option', { a: 'Option', b: null }, null, groupId)
 );
 
@@ -116,8 +124,66 @@ expectKnobOfType<number>(
     { 'type a': SomeEnum.Type1, 'type b': SomeEnum.Type2 },
     SomeEnum.Type2
   ),
-  select('select with number array', [1, 2, 3, 4], 1),
+  select<number>('select with number array', [1, 2, 3, 4], 1),
   select('select with readonly number array', [1, 2] as const, 1)
+);
+
+expectKnobOfType<number | null>(
+  select('select with null option', { a: 1, b: null }, null, groupId)
+);
+
+expectKnobOfType<string | string[]>(
+  select(
+    'select with string and string array options',
+    {
+      Red: 'red',
+      Blue: 'blue',
+      Yellow: 'yellow',
+      Rainbow: ['red', 'orange', 'etc'],
+      None: 'transparent',
+    },
+    'red'
+  )
+);
+
+expectKnobOfType<number | number[]>(
+  select(
+    'select with number and number array options',
+    {
+      Red: 1,
+      Blue: 2,
+      Yellow: 3,
+      Rainbow: [4, 5, 6],
+      None: 7,
+    },
+    7
+  )
+);
+
+expectKnobOfType<string | string[] | null>(
+  select(
+    'select with string, string array, and null options',
+    {
+      Red: 'red',
+      Blue: 'blue',
+      Yellow: 'yellow',
+      Rainbow: ['red', 'orange', 'etc'],
+      None: null,
+    },
+    null
+  )
+);
+
+expectKnobOfType<number[]>(
+  select(
+    'select with number array options',
+    {
+      ones: [1],
+      twos: [2, 2],
+      threes: [3, 3, 3],
+    },
+    [1]
+  )
 );
 
 /** Object knob */
@@ -150,6 +216,68 @@ expectKnobOfType(
     display: 'radio',
   }),
   options('options with group', {}, '', { display: 'check' })
+);
+
+expectKnobOfType<number | null>(
+  options('select with null option', { a: 1, b: null }, null, { display: 'check' })
+);
+
+expectKnobOfType<string | string[]>(
+  options(
+    'options with string and string array options',
+    {
+      Red: 'red',
+      Blue: 'blue',
+      Yellow: 'yellow',
+      Rainbow: ['red', 'orange', 'etc'],
+      None: 'transparent',
+    },
+    'red',
+    { display: 'check' }
+  )
+);
+
+expectKnobOfType<number | number[]>(
+  options(
+    'select with number and number array options',
+    {
+      Red: 1,
+      Blue: 2,
+      Yellow: 3,
+      Rainbow: [4, 5, 6],
+      None: 7,
+    },
+    7,
+    { display: 'check' }
+  )
+);
+
+expectKnobOfType<string | string[] | null>(
+  options(
+    'select with string, string array, and null options',
+    {
+      Red: 'red',
+      Blue: 'blue',
+      Yellow: 'yellow',
+      Rainbow: ['red', 'orange', 'etc'],
+      None: null,
+    },
+    null,
+    { display: 'check' }
+  )
+);
+
+expectKnobOfType<number[]>(
+  options(
+    'select with number array options',
+    {
+      ones: [1],
+      twos: [2, 2],
+      threes: [3, 3, 3],
+    },
+    [1],
+    { display: 'check' }
+  )
 );
 
 /** Array knob */

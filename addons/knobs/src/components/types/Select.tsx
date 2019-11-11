@@ -1,16 +1,16 @@
-import React, { FunctionComponent, ChangeEvent } from 'react';
+import React, { FunctionComponent, ChangeEvent, Validator } from 'react';
 import PropTypes from 'prop-types';
 
 import { Form } from '@storybook/components';
 import { KnobControlConfig, KnobControlProps } from './types';
 
-export type SelectTypeKnobValue = string | number | null | undefined;
+export type SelectTypeKnobValue = string | number | null | undefined | PropertyKey[];
 
 export type SelectTypeOptionsProp<T extends SelectTypeKnobValue = SelectTypeKnobValue> =
-  | Record<string, T>
-  | Record<T, T[keyof T]>
-  | T[]
-  | readonly T[];
+  | Record<PropertyKey, T>
+  | Record<Extract<T, PropertyKey>, T[keyof T]>
+  | Extract<T, PropertyKey>[]
+  | readonly Extract<T, PropertyKey>[];
 
 export interface SelectTypeKnob<T extends SelectTypeKnobValue = SelectTypeKnobValue>
   extends KnobControlConfig<T> {
@@ -31,13 +31,15 @@ const SelectType: FunctionComponent<SelectTypeProps> & {
 } = ({ knob, onChange }) => {
   const { options } = knob;
   const entries = Array.isArray(options)
-    ? options.reduce<Record<number, SelectTypeKnobValue>>(
-        (acc, k) => Object.assign(acc, { [k]: k }),
-        {}
-      )
-    : (options as Record<string, SelectTypeKnobValue>);
+    ? options.reduce<Record<PropertyKey, SelectTypeKnobValue>>((acc, k) => ({ ...acc, [k]: k }), {})
+    : (options as Record<PropertyKey, SelectTypeKnobValue>);
 
-  const selectedKey = Object.keys(entries).find(k => entries[k] === knob.value);
+  const selectedKey = Object.keys(entries).find(k => {
+    if (Array.isArray(knob.value)) {
+      return JSON.stringify(entries[k]) === JSON.stringify(knob.value);
+    }
+    return entries[k] === knob.value;
+  });
 
   return (
     <Form.Select
@@ -63,13 +65,12 @@ SelectType.defaultProps = {
 };
 
 SelectType.propTypes = {
-  // TODO: remove `any` once DefinitelyTyped/DefinitelyTyped#31280 has been resolved
   knob: PropTypes.shape({
     name: PropTypes.string,
     value: PropTypes.any,
     options: PropTypes.oneOfType([PropTypes.array, PropTypes.object]),
-  }) as any,
-  onChange: PropTypes.func,
+  }) as Validator<SelectTypeProps['knob']>,
+  onChange: PropTypes.func as Validator<SelectTypeProps['onChange']>,
 };
 
 SelectType.serialize = serialize;

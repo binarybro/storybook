@@ -1,20 +1,19 @@
 import React from 'react';
 import { PropRow } from './PropRow';
-
 import { Table } from './PropsTable';
-import { DocsPageWrapper } from '../DocsPage';
+import { ResetWrapper } from '../../typography/DocumentFormatting';
 
 export default {
-  Component: PropRow,
+  component: PropRow,
   title: 'Docs|PropRow',
   excludeStories: /.*Def$/,
   decorators: [
     getStory => (
-      <DocsPageWrapper>
+      <ResetWrapper>
         <Table>
           <tbody>{getStory()}</tbody>
         </Table>
-      </DocsPageWrapper>
+      </ResetWrapper>
     ),
   ],
 };
@@ -105,6 +104,28 @@ export const complexDef = {
   },
 };
 
+export const funcDef = {
+  name: 'concat',
+  type: { name: '(a: string, b: string) => string' },
+  required: true,
+  description: 'concat 2 string values.',
+  defaultValue: '(a, b) => { return a + b; }',
+  jsDocTags: {
+    params: [
+      { title: 'param', name: 'a', description: 'The first string' },
+      { title: 'param', name: 'b', description: 'The second string' },
+    ],
+    returns: { title: 'returns', description: 'The concatenation of both strings' },
+  },
+};
+
+export const markdownDef = {
+  name: 'someString',
+  type: { name: 'string' },
+  description:
+    'A `prop` can *support* __markdown__ syntax. This was ship in ~~5.2~~ 5.3. [Find more info in the storybook docs.](https://storybook.js.org/)',
+};
+
 export const string = () => <PropRow row={stringDef} />;
 export const longName = () => <PropRow row={longNameDef} />;
 export const longDesc = () => <PropRow row={longDescDef} />;
@@ -112,3 +133,5 @@ export const number = () => <PropRow row={numberDef} />;
 export const objectOf = () => <PropRow row={objectDef} />;
 export const arrayOf = () => <PropRow row={arrayDef} />;
 export const complex = () => <PropRow row={complexDef} />;
+export const func = () => <PropRow row={funcDef} />;
+export const markdown = () => <PropRow row={markdownDef} />;

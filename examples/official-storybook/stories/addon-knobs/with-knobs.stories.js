@@ -43,10 +43,6 @@ let injectedIsLoading = false;
 export default {
   title: 'Addons|Knobs.withKnobs',
   decorators: [withKnobs],
-
-  parameters: {
-    component: withKnobs,
-  },
 };
 
 export const tweaksStaticValues = () => {
@@ -322,15 +318,28 @@ export const triggersActionsViaButton = () => {
       injectedItems = [];
     }
   });
+  // Needed to enforce @babel/transform-react-constant-elements deoptimization
+  // See https://github.com/babel/babel/issues/10522
+  const loaderProps = {
+    isLoading: injectedIsLoading,
+    items: injectedItems,
+  };
   return (
     <Fragment>
       <p>Hit the knob button and it will toggle the items list into multiple states.</p>
-      <ItemLoader isLoading={injectedIsLoading} items={injectedItems} />
+      <ItemLoader {...loaderProps} />
     </Fragment>
   );
 };
 triggersActionsViaButton.story = {
   name: 'triggers actions via button',
+};
+
+export const buttonWithReactUseState = () => {
+  const [counter, setCounter] = React.useState(0);
+  button('increment', () => setCounter(counter + 1));
+  button('decrement', () => setCounter(counter - 1));
+  return counter;
 };
 
 export const xssSafety = () => (
@@ -353,3 +362,8 @@ acceptsStoryParameters.story = {
     knobs: { escapeHTML: false },
   },
 };
+
+export const withDuplicateDecorator = () => {
+  return text('Text', 'Hello');
+};
+withDuplicateDecorator.story = { decorators: [withKnobs] };
